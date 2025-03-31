@@ -1,34 +1,29 @@
 import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import Home from './pages/Home';
+import About from './pages/About';
 
 function App() {
-  const [message, setMessage] = useState<string>("");
-
-  useEffect(() => {
-    const fetchMessage = async () => {
-      try {
-        const response = await fetch("http://localhost:5177/api/Hello");
-
-        if (!response.ok) {
-          throw new Error(`API call failed with status: ${response.status}`);
-        }
-
-        const data = await response.text();
-        setMessage(data);
-        
-      } catch (error) {
-        console.error(error);
-        setMessage("Error fetching message from server");
-      }
-    }
-
-    fetchMessage();
-  }, []);
-
   return (
-    <div>
-      <h1>Poker App</h1>
-      <p>Message from API: {message}</p>
-    </div>
+    <Router>
+      <div>
+        <nav>
+          <ul>
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>
+              <Link to="/about">About</Link>
+            </li>
+          </ul>
+        </nav>
+
+        <Routes>
+          <Route path="/about" element={<About />} />
+          <Route path="/" element={<Home />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
