@@ -26,8 +26,8 @@ function Home() {
 
   return (
     <div>
-      <h1>Poker App</h1>
-      <p>Message from API: {message}</p>
+      <h1>College Card Room</h1>
+      <p>Where dreams become reality.</p>
     </div>
   );
 }

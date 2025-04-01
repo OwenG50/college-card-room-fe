@@ -1,0 +1,34 @@
+.users-container {
+    padding: 20px;
+  }
+  
+  .status-message {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+  }
+  
+  .status-message.success {
+    background-color: #ddffdd;
+  }
+  
+  .status-message.error {
+    background-color: #ffdddd;
+  }
+  
+  .user-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .user-item {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .user-item:hover {
+    background-color: #f5f5f5;
+  }
