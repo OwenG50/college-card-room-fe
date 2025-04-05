@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Users.css';
-
-interface User {
-  userId: number;
-  firstName: string;
-  lastName: string;
-  userName: string;
-}
+import { User } from '../../Types/User';
 
 function Users() {
   const [users, setUsers] = useState<User[]>([]);
@@ -20,7 +14,7 @@ function Users() {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:5177/api/User");
+        const response = await fetch("http://localhost:5177/api/Users");
 
         if (!response.ok) {
           throw new Error(`API call failed with status: ${response.status}`);
@@ -45,7 +39,7 @@ function Users() {
       setLoginStatus(`Logging in...`);
       
       // Call your getUserById endpoint
-      const response = await fetch(`http://localhost:5177/api/User/${userId}`);
+      const response = await fetch(`http://localhost:5177/api/Users/${userId}`);
       
       if (!response.ok) {
         throw new Error(`Failed to login as user. Status: ${response.status}`);

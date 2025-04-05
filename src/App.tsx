@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home/Home';
 import About from './pages/About/About';
 import Users from './pages/Users/Users';
+import Lobby from './pages/Lobby/Lobby';
 import './App.css';
 
 function App() {
@@ -60,6 +61,9 @@ function App() {
             <li>
               <Link to="/users">Users</Link>
             </li>
+            <li>
+              <Link to="/lobby">Lobbies</Link>
+            </li>
           </ul>
           
           <div>
@@ -85,6 +89,7 @@ function App() {
           <Routes>
             <Route path="/about" element={<About />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/lobby" element={<Lobby />} />
             <Route path="/" element={<Home />} />
           </Routes>
         </div>
