@@ -14,67 +14,93 @@ function Lobby() {
   const signalRService = SignalRService.getInstance();
 
     // Initialize SignalR connection when component mounts
-  useEffect(() => {
-    const initializeSignalR = async () => {
-      try {
-        await signalRService.startConnection();
+    useEffect(() => {
+      const initializeSignalR = async () => {
+        try {
+          await signalRService.startConnection();
+          
+          // Listen for lobby updates
+          signalRService.on("ReceiveMessage", (message) => {
+            console.log("SignalR message:", message);
+            setStatusMessage(message);
+          });
+          
+          // Listen for lobby updates and refresh the lobbies state
+          signalRService.on("LobbyUpdated", (updatedLobby: TypeLobby) => {
+            setLobbies((prevLobbies) =>
+              prevLobbies.map((lobby) =>
+                lobby.lobbyId === updatedLobby.lobbyId ? updatedLobby : lobby
+              )
+            );
+          });
+          
+          // Listen for new lobby creation
+          signalRService.on("LobbyCreated", (newLobby: TypeLobby) => {
+            console.log("Received newLobby:", newLobby);
+            if (newLobby && newLobby.lobbyId) {
+              setLobbies((prevLobbies) => [...prevLobbies, newLobby]);
+            } else {
+              console.error("Received invalid newLobby object:", newLobby);
+            }
+          });
+          
+          // Listen for lobby deletion
+          signalRService.on("LobbyDeleted", (deletedLobbyId: number) => {
+            console.log(`Lobby deleted: ${deletedLobbyId}`);
+            setLobbies((prevLobbies) =>
+              prevLobbies.filter((lobby) => lobby.lobbyId !== deletedLobbyId)
+            );
+            setStatusMessage(`Lobby ${deletedLobbyId} was deleted.`);
+          });
+          
+          // Listen for player joining a lobby
+          signalRService.on("PlayerJoinedLobby", (lobbyId: number, user: User) => {
+            console.log(`Player joined lobby: ${lobbyId}`, user);
+          
+            if (!lobbyId || !user) {
+              console.error("Invalid data received for PlayerJoinedLobby:", { lobbyId, user });
+              return;
+            }
+          
+            setLobbies((prevLobbies) =>
+              prevLobbies.map((lobby) =>
+                lobby.lobbyId === lobbyId
+                  ? { ...lobby, users: [...lobby.users, user] } // Add the new user to the lobby's user list
+                  : lobby
+              )
+            );
+          });
+
+      // Listen for game start
+      signalRService.on("GameStarted", (lobbyId: number) => {
+        console.log(`Game started in lobby: ${lobbyId}`);
+        setStatusMessage(`Game started in lobby ${lobbyId}!`);
         
-        // Listen for lobby updates
-        signalRService.on("ReceiveMessage", (message) => {
-          console.log("SignalR message:", message);
-          setStatusMessage(message);
-        });
-        
-              // Listen for lobby updates and refresh the lobbies state
-      signalRService.on("LobbyUpdated", (updatedLobby: TypeLobby) => {
+        // Update the lobbies state to mark the game as started
         setLobbies((prevLobbies) =>
           prevLobbies.map((lobby) =>
-            lobby.lobbyId === updatedLobby.lobbyId ? updatedLobby : lobby
+            lobby.lobbyId === lobbyId ? { ...lobby, isStarted: true } : lobby
           )
         );
       });
-      
-      // Listen for new lobby creation
-      signalRService.on("LobbyCreated", (newLobby: TypeLobby) => {
-        console.log("Received newLobby:", newLobby);
-        if (newLobby && newLobby.lobbyId) {
-          setLobbies((prevLobbies) => [...prevLobbies, newLobby]);
-        } else {
-          console.error("Received invalid newLobby object:", newLobby);
+    
+        } catch (error) {
+          console.error("Error initializing SignalR:", error);
         }
-      });
-      } catch (error) {
-        console.error("Error initializing SignalR:", error);
-      }
-    };
-
-    signalRService.on("PlayerJoinedLobby", (lobbyId: number, user: User) => {
-      console.log(`Player joined lobby: ${lobbyId}`, user);
+      };
     
-      if (!lobbyId || !user) {
-        console.error("Invalid data received for PlayerJoinedLobby:", { lobbyId, user });
-        return;
-      }
+      initializeSignalR();
     
-      setLobbies((prevLobbies) =>
-        prevLobbies.map((lobby) =>
-          lobby.lobbyId === lobbyId
-            ? { ...lobby, users: [...lobby.users, user] } // Add the new user to the lobby's user list
-            : lobby
-        )
-      );
-    });
-
-    initializeSignalR();
-
-    // Clean up when component unmounts
-    return () => {
-      signalRService.off("ReceiveMessage");
-      signalRService.off("LobbyUpdated");
-      signalRService.off("LobbyCreated");
-      signalRService.off("PlayerJoinedLobby");
-    };
-  }, []);
+      // Clean up when component unmounts
+      return () => {
+        signalRService.off("ReceiveMessage");
+        signalRService.off("LobbyUpdated");
+        signalRService.off("LobbyCreated");
+        signalRService.off("PlayerJoinedLobby");
+        signalRService.off("LobbyDeleted");
+        signalRService.off("GameStarted");
+      };
+    }, []);
 
   // Fetch current user from localStorage
   useEffect(() => {
@@ -186,6 +212,34 @@ function Lobby() {
     } catch (error) {
       console.error(error);
       setStatusMessage(`Error joining lobby: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const deleteLobby = async (lobbyId: number) => {
+    try {
+      setStatusMessage(`Deleting lobby ${lobbyId}...`);
+  
+      const response = await fetch(`http://localhost:5177/api/Lobbies/${lobbyId}`, {
+        method: "DELETE",
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to delete lobby. Status: ${response.status}`);
+      }
+  
+      setStatusMessage(`Lobby ${lobbyId} deleted successfully!`);
+  
+      // Remove the deleted lobby from the state
+      setLobbies((prevLobbies) =>
+        prevLobbies.filter((lobby) => lobby.lobbyId !== lobbyId)
+      );
+    } catch (error) {
+      console.error(error);
+      setStatusMessage(
+        `Error deleting lobby: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
@@ -302,7 +356,14 @@ function Lobby() {
                       Join
                     </button>
                   )}
-                </div>
+                    <button
+                      className="button danger"
+                      onClick={() => deleteLobby(lobby.lobbyId)}
+                      disabled={loading}
+                    >
+                      Delete
+                    </button>
+                  </div>
               </li>
             ))}
           </ul>
