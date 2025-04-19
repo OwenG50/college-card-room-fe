@@ -3,6 +3,7 @@ import './Lobby.css';
 import { User } from '../../Types/User';
 import { TypeLobby } from '../../Types/TypeLobby';
 import SignalRService from '../../services/SignalRService';
+import { useNavigate } from 'react-router-dom';
 
 function Lobby() {
   const [lobbies, setLobbies] = useState<TypeLobby[]>([]);
@@ -10,6 +11,8 @@ function Lobby() {
   const [error, setError] = useState<string>("");
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [gameUrls, setGameUrls] = useState<Record<number, string>>({});
+  const navigate = useNavigate();
 
   const signalRService = SignalRService.getInstance();
 
@@ -72,7 +75,7 @@ function Lobby() {
           });
 
       // Listen for game start
-      signalRService.on("GameStarted", (lobbyId: number) => {
+      signalRService.on("GameStarted", async (lobbyId: number) => {
         console.log(`Game started in lobby: ${lobbyId}`);
         setStatusMessage(`Game started in lobby ${lobbyId}!`);
         
@@ -82,14 +85,28 @@ function Lobby() {
             lobby.lobbyId === lobbyId ? { ...lobby, isStarted: true } : lobby
           )
         );
-      });
-    
-        } catch (error) {
-          console.error("Error initializing SignalR:", error);
+
+        // Fetch poker game data and set gameUrl for all users in the lobby
+        try {
+          const pokerGameResponse = await fetch(`http://localhost:5177/api/pokerGames/lobby/${lobbyId}`);
+          if (pokerGameResponse.ok) {
+            const pokerGameData = await pokerGameResponse.json();
+            if (pokerGameData && pokerGameData.gameUrl) {
+              setGameUrls(prev => ({ ...prev, [lobbyId]: pokerGameData.gameUrl }));
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch poker game data after GameStarted:", err);
         }
-      };
-    
-      initializeSignalR();
+      });
+
+      // ...existing handlers...
+    } catch (error) {
+      console.error("Error initializing SignalR:", error);
+    }
+  };
+
+  initializeSignalR();
     
       // Clean up when component unmounts
       return () => {
@@ -138,6 +155,26 @@ function Lobby() {
       const data = await response.json();
       setLobbies(data);
       
+      // Fetch gameUrl for all started lobbies
+      const startedLobbies = data.filter((lobby: TypeLobby) => lobby.isStarted);
+      const urls: Record<number, string> = {};
+      await Promise.all(
+        startedLobbies.map(async (lobby: TypeLobby) => {
+          try {
+            const res = await fetch(`http://localhost:5177/api/pokerGames/lobby/${lobby.lobbyId}`);
+            if (res.ok) {
+              const gameData = await res.json();
+              if (gameData && gameData.gameUrl) {
+                urls[lobby.lobbyId] = gameData.gameUrl;
+              }
+            }
+          } catch (err) {
+            // Ignore errors for individual lobbies
+          }
+        })
+      );
+      setGameUrls(urls);
+
     } catch (error) {
       console.error(error);
       setError(`Error fetching lobbies: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -268,7 +305,7 @@ function Lobby() {
       
       // Refresh lobbies
       fetchLobbies();
-      
+
     } catch (error) {
       console.error(error);
       setStatusMessage(`Error starting game: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -344,6 +381,15 @@ function Lobby() {
                           onClick={() => startGame(lobby.lobbyId)}
                         >
                           Start Game
+                        </button>
+                      )}
+                      {/* Always show Go to Game button if game is started and gameUrl exists */}
+                      {lobby.isStarted && gameUrls[lobby.lobbyId] && (
+                        <button
+                          className="button primary"
+                          onClick={() => navigate(gameUrls[lobby.lobbyId].replace('http://localhost:3000', ''))}
+                        >
+                          Go to Game
                         </button>
                       )}
                     </>

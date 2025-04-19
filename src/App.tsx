@@ -4,6 +4,7 @@ import Home from './pages/Home/Home';
 import About from './pages/About/About';
 import Users from './pages/Users/Users';
 import Lobby from './pages/Lobby/Lobby';
+import PokerGame from './pages/PokerGame/PokerGame';
 import './App.css';
 
 function App() {
@@ -87,6 +88,7 @@ function App() {
 
         <div className="content">
           <Routes>
+            <Route path="/poker-games/:gameId" element={<PokerGame />} />
             <Route path="/about" element={<About />} />
             <Route path="/users" element={<Users />} />
             <Route path="/lobby" element={<Lobby />} />
