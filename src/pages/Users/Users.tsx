@@ -8,7 +8,6 @@ function Users() {
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [loginStatus, setLoginStatus] = useState<string>("");
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -55,10 +54,6 @@ function Users() {
       
       setLoginStatus(`Successfully logged in as ${userData.userName}`);
       
-      // Redirect to home page after successful login
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
       
     } catch (error) {
       console.error(error);
