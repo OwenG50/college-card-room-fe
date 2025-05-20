@@ -1,0 +1,11 @@
+.game-settings-display {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .game-settings-list {
+    list-style: none;
+    padding: 0;
+  }
