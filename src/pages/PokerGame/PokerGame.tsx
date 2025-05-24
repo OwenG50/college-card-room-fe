@@ -69,19 +69,33 @@ function PokerGamePage() {
   if (loading) return <div>Loading game...</div>;
   if (!game) return <div>Game not found.</div>;
 
-  return (
-    <div>
-      <h1>Poker Game</h1>
-      <p>Game ID: {gameId}</p>
-      <GameSettingsForm
-        gameId={gameId}
-        initialSmallBlind={game.smallBlindAmount}
-        initialBigBlind={game.bigBlindAmount}
-        onSettingsUpdated={handleSettingsUpdated}
-      />
-      <GameSettingsDisplay game={game} />
-      {/* Render other game details here */}
-    </div>
+  // Function to start the game
+  const handleStartGame = async () => {
+    try {
+      await fetch(`http://localhost:5177/api/pokerGames/${gameId}/start`, {
+        method: 'POST',
+      });
+    } catch (err) {
+      console.error('Network error while starting the game.', err);
+    } finally {
+      alert('Game started!');
+    }
+  };
+
+return (
+  <div>
+    <h1>Poker Game</h1>
+    <p>Game ID: {gameId}</p>
+    <GameSettingsForm
+      gameId={gameId}
+      initialSmallBlind={game.smallBlindAmount}
+      initialBigBlind={game.bigBlindAmount}
+      onSettingsUpdated={handleSettingsUpdated}
+    />
+    <GameSettingsDisplay game={game} />
+    <button onClick={handleStartGame}>Start Game</button>
+    {/* Render other game details here */}
+  </div>
   );
 }
 

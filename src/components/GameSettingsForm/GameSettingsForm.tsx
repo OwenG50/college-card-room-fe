@@ -41,6 +41,24 @@ const GameSettingsForm: React.FC<GameSettingsFormProps> = ({
     }
   };
 
+  const handleSetDealerAndBlinds = async () => {
+    setStatus('Setting dealer and blinds...');
+    try {
+      const response = await fetch(`http://localhost:5177/api/pokerGames/${gameId}/setInitialDealerAndBlinds`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        setStatus('Dealer and blinds set!');
+        if (onSettingsUpdated) onSettingsUpdated();
+      } else {
+        const errorText = await response.text();
+        setStatus(`Error: ${errorText}`);
+      }
+    } catch (err) {
+      setStatus('Network error');
+    }
+};
+
   return (
     <form onSubmit={handleSubmit}>
       <div>
@@ -66,7 +84,10 @@ const GameSettingsForm: React.FC<GameSettingsFormProps> = ({
         </label>
       </div>
       <button type="submit">Update Settings</button>
-      {status && <div>{status}</div>}
+      <button type="button" onClick={handleSetDealerAndBlinds}>
+      Set Dealer and Blind Settings
+      </button>
+      <p>{status}</p>
     </form>
   );
 };
